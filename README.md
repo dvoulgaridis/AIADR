@@ -1,5 +1,8 @@
 ## AIADR — AI-Assisted Data Review
 
+<img width="1600" height="900" alt="Image" src="https://github.com/user-attachments/assets/e64c26b9-0333-4c7d-b238-ddf390c1e02f" />
+
+
 [![CI](https://github.com/dvoulgaridis/AIADR/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dvoulgaridis/AIADR/actions/workflows/ci.yml)
 
 AIADR assists with reviewing and redacting images, documents and audio files. It creates editable redaction layers, renders deterministic redacted outputs and exports a lightweight audit bundle. Review behavior comes from portable instruction sets; GDPR and CCPA/CPRA sets are supplied. AIADR does not guarantee legal compliance.
