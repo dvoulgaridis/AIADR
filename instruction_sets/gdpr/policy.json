@@ -1,0 +1,91 @@
+{
+  "defaults": {
+    "privacy_category": "unknown",
+    "special_category_type": "none",
+    "privacy_risk": "medium",
+    "effects": {
+      "document": {"action": "redact", "effect": "box"},
+      "image": {"action": "redact", "effect": "box"},
+      "audio": {"action": "redact", "effect": "bleep"}
+    }
+  },
+  "entity_rules": {
+    "face": {
+      "display_name": "Face",
+      "description": "Visible human face; identifiability depends on context.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "medium",
+      "effects": {"image": {"action": "redact", "effect": "blur"}}
+    },
+    "minor_face": {
+      "display_name": "Minor's face",
+      "description": "Visible face of a likely minor.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high",
+      "effects": {"image": {"action": "redact", "effect": "blur"}}
+    },
+    "name": {
+      "display_name": "Personal name",
+      "description": "A name identifying a person.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high",
+      "effects": {
+        "document": {"action": "pseudonymize", "effect": "token_replace"}
+      }
+    },
+    "email": {
+      "display_name": "Email address",
+      "description": "An address identifying an electronic mailbox.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high",
+      "effects": {
+        "document": {"action": "mask", "effect": "partial_mask"}
+      }
+    },
+    "phone": {
+      "display_name": "Phone number",
+      "description": "A telephone number associated with a person.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high",
+      "effects": {
+        "document": {"action": "mask", "effect": "partial_mask"}
+      }
+    },
+    "address": {
+      "display_name": "Address",
+      "description": "A street or mailing address.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high"
+    },
+    "id_number": {
+      "display_name": "Identification number",
+      "description": "A government, account, or similar identifying number.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high"
+    },
+    "financial": {
+      "display_name": "Financial information",
+      "description": "A financial account, payment, or bank detail.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high"
+    },
+    "health_data": {
+      "display_name": "Health data",
+      "description": "Health-related personal data.",
+      "privacy_category": "special_category",
+      "special_category_type": "health_data",
+      "privacy_risk": "critical"
+    },
+    "not_personal_data": {
+      "display_name": "Not personal data",
+      "description": "Reviewer-documented clearance.",
+      "privacy_category": "not_personal_data",
+      "privacy_risk": "low",
+      "effects": {
+        "document": {"action": "preserve", "effect": "none"},
+        "image": {"action": "preserve", "effect": "none"},
+        "audio": {"action": "preserve", "effect": "none"}
+      }
+    }
+  }
+}

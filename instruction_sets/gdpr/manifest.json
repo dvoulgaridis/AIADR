@@ -1,0 +1,11 @@
+{
+  "id": "gdpr",
+  "name": "GDPR",
+  "policy": "policy.json",
+  "prompts": {
+    "text": "prompts/text.md",
+    "document": "prompts/document.md",
+    "image": "prompts/image.md",
+    "audio": "prompts/audio.md"
+  }
+}

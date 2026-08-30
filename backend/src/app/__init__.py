@@ -1,0 +1,1 @@
+"""AIADR backend application package."""

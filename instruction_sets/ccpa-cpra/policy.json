@@ -1,0 +1,130 @@
+{
+  "defaults": {
+    "privacy_category": "unknown",
+    "special_category_type": "none",
+    "privacy_risk": "medium",
+    "effects": {
+      "document": {"action": "redact", "effect": "box"},
+      "image": {"action": "redact", "effect": "box"},
+      "audio": {"action": "redact", "effect": "bleep"}
+    }
+  },
+  "entity_rules": {
+    "face": {
+      "display_name": "Face",
+      "description": "A visible face that may identify or be linkable to a consumer.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "medium",
+      "effects": {"image": {"action": "redact", "effect": "blur"}}
+    },
+    "minor_face": {
+      "display_name": "Minor's face",
+      "description": "A visible face of a likely minor.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "critical",
+      "effects": {"image": {"action": "redact", "effect": "blur"}}
+    },
+    "name": {
+      "display_name": "Personal name",
+      "description": "A name identifying or reasonably linkable to a consumer or household.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high",
+      "effects": {"document": {"action": "pseudonymize", "effect": "token_replace"}}
+    },
+    "email": {
+      "display_name": "Email address",
+      "description": "An address identifying an electronic mailbox.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high",
+      "effects": {"document": {"action": "mask", "effect": "partial_mask"}}
+    },
+    "phone": {
+      "display_name": "Phone number",
+      "description": "A telephone number associated with a consumer or household.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high",
+      "effects": {"document": {"action": "mask", "effect": "partial_mask"}}
+    },
+    "address": {
+      "display_name": "Postal address",
+      "description": "A street, postal, or household address.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high"
+    },
+    "government_id": {
+      "display_name": "Government identifier",
+      "description": "A social security, driver's license, passport, or similar identifier.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "critical"
+    },
+    "financial": {
+      "display_name": "Financial information",
+      "description": "A bank, payment, account, or financial detail.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "critical"
+    },
+    "account_credentials": {
+      "display_name": "Account credentials",
+      "description": "Credentials or access data that could permit account access.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "critical"
+    },
+    "online_identifier": {
+      "display_name": "Online identifier",
+      "description": "An IP address, cookie identifier, device identifier, or similar online identifier.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "high"
+    },
+    "precise_geolocation": {
+      "display_name": "Precise geolocation",
+      "description": "Location data precise enough to identify a consumer's movements or presence.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "critical"
+    },
+    "biometric": {
+      "display_name": "Biometric identifier",
+      "description": "Biometric information used or suitable for unique identification.",
+      "privacy_category": "special_category",
+      "special_category_type": "biometric_identification",
+      "privacy_risk": "critical"
+    },
+    "health_data": {
+      "display_name": "Health information",
+      "description": "Personal information concerning health, diagnosis, treatment, or care.",
+      "privacy_category": "special_category",
+      "special_category_type": "health_data",
+      "privacy_risk": "critical"
+    },
+    "racial_or_ethnic_origin": {
+      "display_name": "Racial or ethnic origin",
+      "description": "Information revealing racial or ethnic origin.",
+      "privacy_category": "special_category",
+      "special_category_type": "racial_or_ethnic_origin",
+      "privacy_risk": "critical"
+    },
+    "religious_belief": {
+      "display_name": "Religious belief",
+      "description": "Information revealing religious or philosophical beliefs.",
+      "privacy_category": "special_category",
+      "special_category_type": "religious_or_philosophical_belief",
+      "privacy_risk": "critical"
+    },
+    "minor_data": {
+      "display_name": "Minor's personal information",
+      "description": "Personal information associated with a likely minor.",
+      "privacy_category": "personal_data",
+      "privacy_risk": "critical"
+    },
+    "not_personal_data": {
+      "display_name": "Not personal information",
+      "description": "Reviewer-documented clearance.",
+      "privacy_category": "not_personal_data",
+      "privacy_risk": "low",
+      "effects": {
+        "document": {"action": "preserve", "effect": "none"},
+        "image": {"action": "preserve", "effect": "none"},
+        "audio": {"action": "preserve", "effect": "none"}
+      }
+    }
+  }
+}

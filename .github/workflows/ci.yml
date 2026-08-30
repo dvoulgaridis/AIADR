@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7.0.0
+
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v6.4.0
+        with:
+          node-version: 24
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: pnpm/action-setup@v6.0.9
+        with:
+          version: 11.9.0
+
+      - name: Install Python deps
+        run: uv sync --all-packages --dev
+
+      - name: Install frontend deps
+        run: pnpm --dir frontend install
+
+      - name: Build development DOCX processor
+        run: |
+          dotnet restore docx-processor/Aiadr.Docx.csproj --locked-mode
+          dotnet build docx-processor/Aiadr.Docx.csproj --no-restore
+
+      - name: Publish release DOCX processor
+        run: uv run python scripts/publish_docx_processor.py
+
+      - name: Check generated API contracts
+        run: |
+          uv run python scripts/generate_contracts.py
+          git diff --exit-code -- backend/src/app/api/generated/contracts.py frontend/src/api/generated/openapi.ts
+
+      - name: Python lint
+        run: uv run ruff check .
+
+      - name: Python typecheck
+        run: uv run mypy main.py backend/src scripts/generate_contracts.py scripts/publish_docx_processor.py
+
+      - name: Frontend typecheck
+        run: pnpm --dir frontend run typecheck
+
+      - name: Frontend build
+        run: pnpm --dir frontend run build

@@ -1,0 +1,10 @@
+{
+  "name": "aiadr",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "description": "AIADR – AI-Assisted Data Review: a local WebUI for instruction-set-driven personal-data review and redaction.",
+  "license": "MIT"
+}

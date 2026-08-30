@@ -1,0 +1,1544 @@
+openapi: 3.1.0
+info:
+  title: AIADR API
+  version: 0.1.0.dev0
+  description: Contract for the local AI-Assisted Data Review application.
+servers:
+  - url: /api/v1
+tags:
+  - name: health
+  - name: instruction-sets
+  - name: uploads
+  - name: sessions
+  - name: events
+  - name: exports
+  - name: settings
+  - name: audit
+paths:
+  /health:
+    get:
+      tags: [health]
+      operationId: getHealth
+      responses:
+        "200":
+          description: Application health.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /instruction-sets:
+    get:
+      tags: [instruction-sets]
+      operationId: listInstructionSets
+      responses:
+        "200":
+          description: Valid portable instruction sets available to new sessions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstructionSetsResponse"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      tags: [instruction-sets]
+      operationId: createInstructionSet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InstructionSetCreateRequest" }
+      responses:
+        "201":
+          description: ID of the created instruction set.
+          content:
+            application/json:
+              schema: { type: string }
+        default:
+          $ref: "#/components/responses/Error"
+  /instruction-sets/{instruction_set_id}:
+    parameters:
+      - name: instruction_set_id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      tags: [instruction-sets]
+      operationId: getInstructionSet
+      responses:
+        "200":
+          description: Editable instruction-set definition.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstructionSetDefinition" }
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      tags: [instruction-sets]
+      operationId: updateInstructionSet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InstructionSetUpdateRequest" }
+      responses:
+        "204":
+          description: Instruction set replaced.
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      tags: [instruction-sets]
+      operationId: deleteInstructionSet
+      responses:
+        "204":
+          description: Instruction set removed from the catalogue.
+        default:
+          $ref: "#/components/responses/Error"
+  /instruction-sets/{instruction_set_id}/active:
+    parameters:
+      - name: instruction_set_id
+        in: path
+        required: true
+        schema: { type: string }
+    put:
+      tags: [instruction-sets]
+      operationId: activateInstructionSet
+      responses:
+        "204":
+          description: Instruction set selected for future analysis.
+        default:
+          $ref: "#/components/responses/Error"
+  /uploads:
+    post:
+      tags: [uploads]
+      operationId: uploadSource
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Generated session ID for the created review session.
+          content:
+            application/json:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions:
+    get:
+      tags: [sessions]
+      operationId: listSessions
+      responses:
+        "200":
+          description: Active review sessions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [sessions]
+      operationId: getSession
+      responses:
+        "200":
+          description: Review session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
+    patch:
+      tags: [sessions]
+      operationId: updateSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionUpdateRequest"
+      responses:
+        "204":
+          description: Review session updated.
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      tags: [sessions]
+      operationId: deleteSession
+      responses:
+        "204":
+          description: Review session permanently purged.
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/source:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [sessions]
+      operationId: downloadSource
+      responses:
+        "200":
+          description: Original source bytes.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/preview:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [sessions]
+      operationId: getSourcePreview
+      responses:
+        "200":
+          description: Browser preview bytes.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/document/text-lines:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [sessions]
+      operationId: getDocumentTextLines
+      responses:
+        "200":
+          description: Text lines extracted from the PDF displayed for the document.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentTextLinesResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/document/docx/target:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    post:
+      tags: [sessions]
+      operationId: resolveDocxTextTarget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocxTextSelectionRequest"
+      responses:
+        "200":
+          description: Canonical Open XML target corresponding to selected PDF text.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocxTextLocator"
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/document/docx/picture-placements:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [sessions]
+      operationId: getDocxPicturePlacements
+      responses:
+        "200":
+          description: Renderer-derived PDF page placements for targetable DOCX pictures.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocxPicturePlacementsResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/model-log:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [sessions]
+      operationId: getModelLogs
+      description: >-
+        Return model-call summaries. In development mode, debug fields may
+        additionally contain sensitive request, response, and provider diagnostic
+        text.
+      responses:
+        "200":
+          description: Model-call summaries and optional development diagnostics.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelLogsResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/analysis:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    post:
+      tags: [sessions]
+      operationId: requestAnalysis
+      responses:
+        "202":
+          description: Analysis request accepted.
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/analysis/cancel:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    post:
+      tags: [sessions]
+      operationId: cancelAnalysis
+      responses:
+        "202":
+          description: Analysis cancellation requested.
+        "204":
+          description: No active analysis.
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/findings:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    post:
+      tags: [sessions]
+      operationId: createManualFinding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManualFindingCreateRequest"
+      responses:
+        "201":
+          description: Generated layer ID for the created manual finding.
+          content:
+            application/json:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/findings/{finding_id}:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+      - $ref: "#/components/parameters/FindingId"
+    patch:
+      tags: [sessions]
+      operationId: updateFinding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindingUpdateRequest"
+      responses:
+        "204":
+          description: Finding updated.
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/classification-options:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [sessions]
+      operationId: getClassificationOptions
+      responses:
+        "200":
+          description: Entity types available from the session instruction set.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassificationOptionsResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/layers:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [sessions]
+      operationId: getLayers
+      responses:
+        "200":
+          description: Hydrated review layers.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LayersResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/layers/{layer_id}:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+      - $ref: "#/components/parameters/LayerId"
+    put:
+      tags: [sessions]
+      operationId: updateLayer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LayerUpdateRequest"
+      responses:
+        "204":
+          description: Layer updated.
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/layers/{layer_id}/effect-override:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+      - $ref: "#/components/parameters/LayerId"
+    delete:
+      tags: [sessions]
+      operationId: resetEffectOverride
+      responses:
+        "204":
+          description: Layer restored to its instruction-set policy effect.
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/export:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    post:
+      tags: [exports]
+      operationId: createExport
+      responses:
+        "200":
+          description: Created export bundle.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportCreateResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/export/latest:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [exports]
+      operationId: downloadLatestExport
+      responses:
+        "200":
+          description: Latest export bundle.
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/output:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [exports]
+      operationId: downloadOutput
+      responses:
+        "200":
+          description: Rendered redacted output.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/events:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [events]
+      operationId: streamAnalysisEvents
+      x-event-schema:
+        $ref: "#/components/schemas/AnalysisEvent"
+      responses:
+        "200":
+          description: Server-sent analysis events whose data is an AnalysisEvent JSON object.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/Error"
+  /sessions/{session_id}/audit-events:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [audit]
+      operationId: getAuditEvents
+      responses:
+        "200":
+          description: Session audit trail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventsResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /settings/models:
+    get:
+      tags: [settings]
+      operationId: listModels
+      responses:
+        "200":
+          description: Saved models and active selection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelsResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /settings/dependencies:
+    get:
+      tags: [settings]
+      operationId: getDependencies
+      responses:
+        "200":
+          description: Current availability of local media dependencies.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DependenciesResponse"
+        default:
+          $ref: "#/components/responses/Error"
+  /settings/models/{model_id}:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    put:
+      tags: [settings]
+      operationId: updateModel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelWriteRequest"
+      responses:
+        "204":
+          description: Model created or updated.
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      tags: [settings]
+      operationId: deleteModel
+      responses:
+        "204":
+          description: Model deleted.
+        default:
+          $ref: "#/components/responses/Error"
+  /settings/models/{model_id}/model-metadata:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    get:
+      tags: [settings]
+      operationId: getModelModelMetadata
+      responses:
+        "200":
+          description: Provider-reported metadata for the configured model.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelMetadata"
+        default:
+          $ref: "#/components/responses/Error"
+  /settings/models/{model_id}/active:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    put:
+      tags: [settings]
+      operationId: activateModel
+      responses:
+        "204":
+          description: Model selected for future analysis.
+        default:
+          $ref: "#/components/responses/Error"
+  /settings/review-options:
+    get:
+      tags: [settings]
+      operationId: getReviewOptions
+      responses:
+        "200":
+          description: Review decisions and supported redaction effects.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewOptions"
+        default:
+          $ref: "#/components/responses/Error"
+components:
+  parameters:
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      schema: { type: string }
+    FindingId:
+      name: finding_id
+      in: path
+      required: true
+      schema: { type: string }
+    LayerId:
+      name: layer_id
+      in: path
+      required: true
+      schema: { type: string }
+    ModelId:
+      name: model_id
+      in: path
+      required: true
+      schema: { type: string }
+    Page:
+      name: page
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+  responses:
+    Error:
+      description: Structured application error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status, application_version, source_revision, source_modified]
+      properties:
+        status: { type: string, const: ok }
+        application_version: { type: string }
+        source_revision: { type: [string, "null"] }
+        source_modified: { type: [boolean, "null"] }
+    ErrorCategory:
+      type: string
+      enum: [validation, conflict, configuration, transport, processing, rendering, export, storage, internal]
+    ErrorCode:
+      type: string
+      enum:
+        - request_validation_failed
+        - empty_update
+        - unsupported_upload_type
+        - file_too_large
+        - text_line_too_large
+        - unsafe_path
+        - no_models
+        - model_not_found
+        - model_store_invalid
+        - active_model_not_set
+        - active_instruction_set_not_set
+        - settings_store_invalid
+        - model_endpoint_not_configured
+        - token_count_failed
+        - model_input_limit_exceeded
+        - model_output_limit_exceeded
+        - model_context_limit_exceeded
+        - vision_not_supported
+        - audio_not_supported
+        - pdf_dependency_missing
+        - ffmpeg_unavailable
+        - prompt_missing
+        - unsupported_prompt_kind
+        - instruction_set_not_found
+        - invalid_instruction_set
+        - instruction_set_exists
+        - instruction_set_conflict
+        - instruction_set_not_locked
+        - instruction_set_integrity_error
+        - session_not_found
+        - session_file_missing
+        - source_integrity_error
+        - analysis_already_running
+        - provider_connection_failed
+        - provider_model_not_found
+        - provider_authentication_failed
+        - provider_rate_limited
+        - provider_request_invalid
+        - provider_response_invalid
+        - not_pdf_session
+        - pdf_page_out_of_range
+        - finding_not_found
+        - layer_not_found
+        - invalid_finding_update
+        - invalid_layer_update
+        - duplicate_finding_layer
+        - invalid_action_effect
+        - output_missing
+        - output_state_changed
+        - output_blocked_pending_review
+        - audio_render_failed
+        - export_missing
+        - docx_processor_missing
+        - docx_processor_busy
+        - docx_unsupported_feature
+        - docx_processing_failed
+        - document_converter_missing
+        - document_conversion_failed
+        - invalid_docx_text_target
+        - review_integrity_error
+        - internal_error
+    ErrorPayload:
+      type: object
+      additionalProperties: false
+      required: [code, message, category, retryable, details, correlation_id]
+      properties:
+        code: { $ref: "#/components/schemas/ErrorCode" }
+        message: { type: string }
+        category: { $ref: "#/components/schemas/ErrorCategory" }
+        retryable: { type: boolean }
+        details:
+          type: [object, "null"]
+          additionalProperties: true
+        correlation_id: { type: string }
+    ErrorResponse:
+      allOf:
+        - $ref: "#/components/schemas/ErrorPayload"
+    SourceKind:
+      type: string
+      enum: [document, image, audio]
+    SessionStatus:
+      type: string
+      enum: [uploaded, review_ready, error, cancelled]
+    FileDescriptor:
+      type: object
+      additionalProperties: false
+      required: [format, filename, mime_type, size_bytes, sha256]
+      properties:
+        format: { type: string }
+        filename: { type: string }
+        mime_type: { type: string }
+        size_bytes: { type: integer, minimum: 0 }
+        sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+    DocumentLayout:
+      type: string
+      enum: [text, fixed, word_processing]
+    TextDocumentState:
+      type: object
+      additionalProperties: false
+      required: [layout, line_count, character_count]
+      properties:
+        layout: { type: string, const: text }
+        line_count: { type: integer, minimum: 0 }
+        character_count: { type: integer, minimum: 0 }
+    PdfDocumentState:
+      type: object
+      additionalProperties: false
+      required: [layout, page_count]
+      properties:
+        layout: { type: string, const: fixed }
+        page_count: { type: integer, minimum: 1 }
+    DocxDocumentState:
+      type: object
+      additionalProperties: false
+      required: [layout, block_count, character_count, page_count, targetable_image_count, unsupported_image_count]
+      properties:
+        layout: { type: string, const: word_processing }
+        block_count: { type: integer, minimum: 0 }
+        character_count: { type: integer, minimum: 0 }
+        page_count: { type: integer, minimum: 1 }
+        targetable_image_count: { type: integer, minimum: 0 }
+        unsupported_image_count: { type: integer, minimum: 0 }
+    DocumentState:
+      oneOf:
+        - $ref: "#/components/schemas/TextDocumentState"
+        - $ref: "#/components/schemas/PdfDocumentState"
+        - $ref: "#/components/schemas/DocxDocumentState"
+      discriminator:
+        propertyName: layout
+        mapping:
+          text: "#/components/schemas/TextDocumentState"
+          fixed: "#/components/schemas/PdfDocumentState"
+          word_processing: "#/components/schemas/DocxDocumentState"
+    DocumentSource:
+      type: object
+      additionalProperties: false
+      required: [kind, file, state]
+      properties:
+        kind: { type: string, const: document }
+        file: { $ref: "#/components/schemas/FileDescriptor" }
+        state: { $ref: "#/components/schemas/DocumentState" }
+    ImageSource:
+      type: object
+      additionalProperties: false
+      required: [kind, file, width, height]
+      properties:
+        kind: { type: string, const: image }
+        file: { $ref: "#/components/schemas/FileDescriptor" }
+        width: { type: integer, minimum: 1 }
+        height: { type: integer, minimum: 1 }
+    AudioSource:
+      type: object
+      additionalProperties: false
+      required: [kind, file, duration_seconds, sample_rate]
+      properties:
+        kind: { type: string, const: audio }
+        file: { $ref: "#/components/schemas/FileDescriptor" }
+        duration_seconds: { type: number, exclusiveMinimum: 0 }
+        sample_rate: { type: integer, minimum: 1 }
+    Source:
+      oneOf:
+        - $ref: "#/components/schemas/DocumentSource"
+        - $ref: "#/components/schemas/ImageSource"
+        - $ref: "#/components/schemas/AudioSource"
+      discriminator:
+        propertyName: kind
+        mapping:
+          document: "#/components/schemas/DocumentSource"
+          image: "#/components/schemas/ImageSource"
+          audio: "#/components/schemas/AudioSource"
+    Session:
+      type: object
+      additionalProperties: false
+      required: [session_id, source, status, analysis_active, instruction_set, display_name, created_at, updated_at, rendered_file, public_error]
+      properties:
+        session_id: { type: string }
+        source: { $ref: "#/components/schemas/Source" }
+        status: { $ref: "#/components/schemas/SessionStatus" }
+        analysis_active: { type: boolean }
+        instruction_set:
+          anyOf:
+            - $ref: "#/components/schemas/InstructionSetReference"
+            - type: "null"
+        display_name: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: [string, "null"], format: date-time }
+        rendered_file:
+          anyOf:
+            - $ref: "#/components/schemas/FileDescriptor"
+            - type: "null"
+        public_error: { type: [string, "null"] }
+    InstructionSetReference:
+      type: object
+      additionalProperties: false
+      required: [id, content_hash]
+      properties:
+        id: { type: string }
+        content_hash: { type: string, pattern: "^[0-9a-f]{64}$" }
+    InstructionSetSummary:
+      type: object
+      additionalProperties: false
+      required: [id, name, content_hash]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        content_hash: { type: string, pattern: "^[0-9a-f]{64}$" }
+    InstructionSetsResponse:
+      type: object
+      additionalProperties: false
+      required: [items, active_instruction_set_id]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/InstructionSetSummary" }
+        active_instruction_set_id: { type: [string, "null"] }
+    InstructionSetPrompts:
+      type: object
+      additionalProperties: false
+      required: [text, document, image, audio]
+      properties:
+        text: { type: string, minLength: 1 }
+        document: { type: string, minLength: 1 }
+        image: { type: string, minLength: 1 }
+        audio: { type: string, minLength: 1 }
+    InstructionSetDefinition:
+      type: object
+      additionalProperties: false
+      required: [id, name, content_hash, policy, prompts]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        content_hash: { type: string, pattern: "^[0-9a-f]{64}$" }
+        policy:
+          type: object
+          additionalProperties: true
+        prompts: { $ref: "#/components/schemas/InstructionSetPrompts" }
+    InstructionSetCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [id, name, policy, prompts]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        policy:
+          type: object
+          additionalProperties: true
+        prompts: { $ref: "#/components/schemas/InstructionSetPrompts" }
+    InstructionSetUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [name, expected_content_hash, policy, prompts]
+      properties:
+        name: { type: string }
+        expected_content_hash: { type: string, pattern: "^[0-9a-f]{64}$" }
+        policy:
+          type: object
+          additionalProperties: true
+        prompts: { $ref: "#/components/schemas/InstructionSetPrompts" }
+    SessionUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [display_name]
+      properties:
+        display_name: { type: [string, "null"] }
+    PrivacyCategory:
+      type: string
+      enum: [not_personal_data, personal_data, special_category, unknown]
+    SpecialCategoryType:
+      type: string
+      enum: [none, racial_or_ethnic_origin, political_opinion, religious_or_philosophical_belief, trade_union_membership, genetic_data, biometric_identification, health_data, sex_life_or_sexual_orientation]
+    DataSubjectContext:
+      type: string
+      enum: [adult, minor, unknown]
+    PrivacyRisk:
+      type: string
+      enum: [low, medium, high, critical]
+    FindingOrigin:
+      type: string
+      enum: [model, reviewer, system]
+    ReviewDecision:
+      type: string
+      enum: [needs_review, confirmed, preserved]
+    TargetRegion:
+      type: object
+      additionalProperties: false
+      required: [x, y, width, height, rotation_degrees]
+      properties:
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, exclusiveMinimum: 0, maximum: 1 }
+        height: { type: number, exclusiveMinimum: 0, maximum: 1 }
+        rotation_degrees: { type: number, minimum: -180, exclusiveMaximum: 180 }
+    AudioRange:
+      type: object
+      additionalProperties: false
+      required: [start_time, end_time]
+      properties:
+        start_time: { type: number, minimum: 0 }
+        end_time: { type: number, exclusiveMinimum: 0 }
+    ImageSurfaceType:
+      type: string
+      enum: [file, pdf_page, docx_picture]
+    FileImageSurface:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type: { type: string, const: file }
+    PdfPageSurface:
+      type: object
+      additionalProperties: false
+      required: [type, page]
+      properties:
+        type: { type: string, const: pdf_page }
+        page: { type: integer, minimum: 1 }
+    DocxPictureSurface:
+      type: object
+      additionalProperties: false
+      required: [type, occurrence_id]
+      properties:
+        type: { type: string, const: docx_picture }
+        occurrence_id: { type: string, pattern: "^pic_[0-9a-f]{64}$" }
+    DocxPicturePlacement:
+      type: object
+      additionalProperties: false
+      required: [occurrence_id, page, region]
+      properties:
+        occurrence_id: { type: string, pattern: "^pic_[0-9a-f]{64}$" }
+        page: { type: integer, minimum: 1 }
+        region: { $ref: "#/components/schemas/TargetRegion" }
+    DocxPicturePlacementsResponse:
+      type: object
+      additionalProperties: false
+      required: [placements]
+      properties:
+        placements:
+          type: array
+          items: { $ref: "#/components/schemas/DocxPicturePlacement" }
+    ImageSurface:
+      oneOf:
+        - $ref: "#/components/schemas/FileImageSurface"
+        - $ref: "#/components/schemas/PdfPageSurface"
+        - $ref: "#/components/schemas/DocxPictureSurface"
+      discriminator:
+        propertyName: type
+        mapping:
+          file: "#/components/schemas/FileImageSurface"
+          pdf_page: "#/components/schemas/PdfPageSurface"
+          docx_picture: "#/components/schemas/DocxPictureSurface"
+    ImageTarget:
+      type: object
+      additionalProperties: false
+      required: [kind, surface, region]
+      properties:
+        kind: { type: string, const: image }
+        surface: { $ref: "#/components/schemas/ImageSurface" }
+        region: { $ref: "#/components/schemas/TargetRegion" }
+    PlainTextLocator:
+      type: object
+      additionalProperties: false
+      required: [format, line_id, exact_text]
+      properties:
+        format: { type: string, const: text }
+        line_id: { type: string, minLength: 1 }
+        exact_text: { type: string, minLength: 1 }
+    DocxTextLocator:
+      type: object
+      additionalProperties: false
+      required: [format, page, line_id, source_sha256, story_kind, part_uri, block_id, start, end, exact_text]
+      properties:
+        format: { type: string, const: docx }
+        page: { type: integer, minimum: 1 }
+        line_id: { type: string, minLength: 1 }
+        source_sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+        story_kind: { $ref: "#/components/schemas/DocxStoryKind" }
+        part_uri: { type: string, minLength: 1 }
+        block_id: { type: string, pattern: "^b_[0-9a-f]{64}$" }
+        start: { type: integer, minimum: 0, description: Inclusive Unicode code-point offset. }
+        end: { type: integer, minimum: 1, description: Exclusive Unicode code-point offset. }
+        exact_text: { type: string, minLength: 1 }
+    DocxTextSelectionRequest:
+      type: object
+      additionalProperties: false
+      required: [page, line_id, exact_text]
+      properties:
+        page: { type: integer, minimum: 1 }
+        line_id: { type: string, minLength: 1 }
+        exact_text: { type: string, minLength: 1 }
+    DocumentLocator:
+      oneOf:
+        - $ref: "#/components/schemas/PlainTextLocator"
+        - $ref: "#/components/schemas/DocxTextLocator"
+      discriminator:
+        propertyName: format
+        mapping:
+          text: "#/components/schemas/PlainTextLocator"
+          docx: "#/components/schemas/DocxTextLocator"
+    DocxStoryKind:
+      type: string
+      enum: [body, header, footer, footnote, endnote]
+    DocumentTarget:
+      type: object
+      additionalProperties: false
+      required: [kind, locator]
+      properties:
+        kind: { type: string, const: document }
+        locator: { $ref: "#/components/schemas/DocumentLocator" }
+    AudioTarget:
+      type: object
+      additionalProperties: false
+      required: [kind, range]
+      properties:
+        kind: { type: string, const: audio }
+        range: { $ref: "#/components/schemas/AudioRange" }
+    FindingTarget:
+      oneOf:
+        - $ref: "#/components/schemas/ImageTarget"
+        - $ref: "#/components/schemas/DocumentTarget"
+        - $ref: "#/components/schemas/AudioTarget"
+      discriminator:
+        propertyName: kind
+        mapping:
+          image: "#/components/schemas/ImageTarget"
+          document: "#/components/schemas/DocumentTarget"
+          audio: "#/components/schemas/AudioTarget"
+    Finding:
+      type: object
+      additionalProperties: false
+      required: [id, target, detected_entity_type, reviewed_entity_type, effective_entity_type, privacy_category, special_category_type, data_subject_context, label, detection_confidence, privacy_risk, description, reason, origin, created_by, review_decision, edited, reviewer_note]
+      properties:
+        id: { type: string }
+        target: { $ref: "#/components/schemas/FindingTarget" }
+        detected_entity_type: { type: [string, "null"] }
+        reviewed_entity_type: { type: [string, "null"] }
+        effective_entity_type: { type: string, readOnly: true }
+        privacy_category: { $ref: "#/components/schemas/PrivacyCategory" }
+        special_category_type: { $ref: "#/components/schemas/SpecialCategoryType" }
+        data_subject_context: { $ref: "#/components/schemas/DataSubjectContext" }
+        label: { type: string }
+        detection_confidence: { type: [number, "null"], minimum: 0, maximum: 1 }
+        privacy_risk: { $ref: "#/components/schemas/PrivacyRisk" }
+        description: { type: [string, "null"] }
+        reason: { type: [string, "null"] }
+        origin: { $ref: "#/components/schemas/FindingOrigin" }
+        created_by: { type: [string, "null"] }
+        review_decision: { $ref: "#/components/schemas/ReviewDecision" }
+        edited: { type: boolean }
+        reviewer_note: { type: [string, "null"] }
+    LayerAction:
+      type: string
+      enum: [redact, mask, pseudonymize, preserve]
+    LayerEffect:
+      type: string
+      enum: [box, blur, pixelate, partial_mask, token_replace, bleep, mute, none]
+    EffectSource:
+      type: string
+      enum: [policy, reviewer]
+    Layer:
+      type: object
+      additionalProperties: false
+      required: [id, finding, action, effect, effect_source, enabled, fill_color, custom_text, note]
+      properties:
+        id: { type: string }
+        finding: { $ref: "#/components/schemas/Finding" }
+        action: { $ref: "#/components/schemas/LayerAction" }
+        effect: { $ref: "#/components/schemas/LayerEffect" }
+        effect_source: { $ref: "#/components/schemas/EffectSource" }
+        enabled: { type: boolean }
+        fill_color: { type: string }
+        custom_text: { type: [string, "null"] }
+        note: { type: [string, "null"] }
+    LayersResponse:
+      type: object
+      additionalProperties: false
+      required: [session_id, layers]
+      properties:
+        session_id: { type: string }
+        layers:
+          type: array
+          items: { $ref: "#/components/schemas/Layer" }
+    ManualFindingCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [label, reviewed_entity_type, description, reason, target]
+      properties:
+        label: { type: string }
+        reviewed_entity_type: { type: string }
+        description: { type: string }
+        reason: { type: string }
+        target: { $ref: "#/components/schemas/FindingTarget" }
+    FindingUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        label: { type: string }
+        reviewed_entity_type: { type: [string, "null"] }
+        description: { type: [string, "null"] }
+        reason: { type: [string, "null"] }
+        review_decision: { $ref: "#/components/schemas/ReviewDecision" }
+        reviewer_note: { type: [string, "null"] }
+        target: { $ref: "#/components/schemas/FindingTarget" }
+    LayerUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        action: { $ref: "#/components/schemas/LayerAction" }
+        effect: { $ref: "#/components/schemas/LayerEffect" }
+        enabled: { type: boolean }
+        fill_color: { type: string }
+        custom_text: { type: [string, "null"] }
+        note: { type: [string, "null"] }
+    PdfTextLine:
+      type: object
+      additionalProperties: false
+      required: [line_id, page, text]
+      properties:
+        line_id: { type: string }
+        page: { type: integer, minimum: 1 }
+        text: { type: string }
+    DocumentTextLinesResponse:
+      type: object
+      additionalProperties: false
+      required: [session_id, lines]
+      properties:
+        session_id: { type: string }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/PdfTextLine" }
+    ExportCreateResponse:
+      type: object
+      additionalProperties: false
+      required: [session_id, status, filename]
+      properties:
+        session_id: { type: string }
+        status: { type: string, const: created }
+        filename: { type: string }
+    AnalysisProgressEvent:
+      type: object
+      additionalProperties: false
+      required: [event_type, session_id, page, progress, message]
+      properties:
+        event_type: { type: string, const: progress }
+        session_id: { type: string }
+        page: { type: [integer, "null"], minimum: 1 }
+        progress: { type: number, minimum: 0, maximum: 1 }
+        message: { type: string }
+    AnalysisCompleteEvent:
+      type: object
+      additionalProperties: false
+      required: [event_type, session_id, progress, message, finding_count]
+      properties:
+        event_type: { type: string, const: complete }
+        session_id: { type: string }
+        progress: { type: number, minimum: 0, maximum: 1 }
+        message: { type: string }
+        finding_count: { type: integer, minimum: 0 }
+    AnalysisErrorEvent:
+      type: object
+      additionalProperties: false
+      required: [event_type, session_id, progress, error]
+      properties:
+        event_type: { type: string, const: error }
+        session_id: { type: string }
+        progress: { type: number, minimum: 0, maximum: 1 }
+        error: { $ref: "#/components/schemas/ErrorPayload" }
+    AnalysisCancelledEvent:
+      type: object
+      additionalProperties: false
+      required: [event_type, session_id, progress, message]
+      properties:
+        event_type: { type: string, const: cancelled }
+        session_id: { type: string }
+        progress: { type: number, minimum: 0, maximum: 1 }
+        message: { type: string }
+    AnalysisEvent:
+      oneOf:
+        - $ref: "#/components/schemas/AnalysisProgressEvent"
+        - $ref: "#/components/schemas/AnalysisCompleteEvent"
+        - $ref: "#/components/schemas/AnalysisErrorEvent"
+        - $ref: "#/components/schemas/AnalysisCancelledEvent"
+      discriminator:
+        propertyName: event_type
+        mapping:
+          progress: "#/components/schemas/AnalysisProgressEvent"
+          complete: "#/components/schemas/AnalysisCompleteEvent"
+          error: "#/components/schemas/AnalysisErrorEvent"
+          cancelled: "#/components/schemas/AnalysisCancelledEvent"
+    DependencyStatus:
+      type: object
+      additionalProperties: false
+      required: [available, path, version, error]
+      properties:
+        available: { type: boolean }
+        path: { type: [string, "null"] }
+        version: { type: [string, "null"] }
+        error: { type: [string, "null"] }
+    DependenciesResponse:
+      type: object
+      additionalProperties: false
+      required: [ffmpeg, libreoffice]
+      properties:
+        ffmpeg: { $ref: "#/components/schemas/DependencyStatus" }
+        libreoffice: { $ref: "#/components/schemas/DependencyStatus" }
+    ApiFormat:
+      type: string
+      enum: [openai_compatible, anthropic_messages, google_genai]
+    OpenAIOutputTokenParameter:
+      type: string
+      enum: [max_tokens, max_completion_tokens]
+    ModelCapabilities:
+      type: object
+      additionalProperties: false
+      required: [supports_vision, supports_audio, supports_json_mode]
+      properties:
+        supports_vision: { type: boolean }
+        supports_audio: { type: boolean }
+        supports_json_mode: { type: boolean }
+    OpenAICompatibleWriteSettings:
+      type: object
+      additionalProperties: false
+      required: [api_format, base_url, api_key, model, context_window_tokens, max_output_tokens, temperature, timeout, max_retries, output_token_parameter]
+      properties:
+        api_format: { type: string, const: openai_compatible }
+        base_url: { type: string }
+        api_key:
+          type: [string, "null"]
+          description: Null preserves the stored key; an empty string clears it.
+        model: { type: string }
+        context_window_tokens: { type: [integer, "null"], minimum: 1 }
+        max_output_tokens: { type: [integer, "null"], minimum: 128 }
+        temperature: { type: [number, "null"], minimum: 0, maximum: 2 }
+        timeout: { type: number, minimum: 1, default: 120 }
+        max_retries: { type: integer, minimum: 0, maximum: 5, default: 1 }
+        output_token_parameter: { $ref: "#/components/schemas/OpenAIOutputTokenParameter" }
+    AnthropicMessagesWriteSettings:
+      type: object
+      additionalProperties: false
+      required: [api_format, api_key, model, max_output_tokens, temperature, timeout, max_retries]
+      properties:
+        api_format: { type: string, const: anthropic_messages }
+        api_key:
+          type: [string, "null"]
+          description: Null preserves the stored key; an empty string clears it.
+        model: { type: string }
+        max_output_tokens: { type: [integer, "null"], minimum: 128 }
+        temperature: { type: [number, "null"], minimum: 0, maximum: 1 }
+        timeout: { type: number, minimum: 1, default: 120 }
+        max_retries: { type: integer, minimum: 0, maximum: 5, default: 1 }
+    GoogleGenAIWriteSettings:
+      type: object
+      additionalProperties: false
+      required: [api_format, api_key, model, max_output_tokens, temperature, timeout, max_retries]
+      properties:
+        api_format: { type: string, const: google_genai }
+        api_key:
+          type: [string, "null"]
+          description: Null preserves the stored key; an empty string clears it.
+        model: { type: string }
+        max_output_tokens: { type: [integer, "null"], minimum: 128 }
+        temperature: { type: [number, "null"], minimum: 0 }
+        timeout: { type: number, minimum: 1, default: 120 }
+        max_retries: { type: integer, minimum: 0, maximum: 5, default: 1 }
+    ProviderWriteSettings:
+      oneOf:
+        - $ref: "#/components/schemas/OpenAICompatibleWriteSettings"
+        - $ref: "#/components/schemas/AnthropicMessagesWriteSettings"
+        - $ref: "#/components/schemas/GoogleGenAIWriteSettings"
+      discriminator:
+        propertyName: api_format
+        mapping:
+          openai_compatible: "#/components/schemas/OpenAICompatibleWriteSettings"
+          anthropic_messages: "#/components/schemas/AnthropicMessagesWriteSettings"
+          google_genai: "#/components/schemas/GoogleGenAIWriteSettings"
+    OpenAICompatibleModelSettings:
+      type: object
+      additionalProperties: false
+      required: [api_format, base_url, model, context_window_tokens, max_output_tokens, temperature, timeout, max_retries, output_token_parameter, api_key_configured]
+      properties:
+        api_format: { type: string, const: openai_compatible }
+        base_url: { type: string }
+        model: { type: string }
+        context_window_tokens: { type: [integer, "null"], minimum: 1 }
+        max_output_tokens: { type: [integer, "null"], minimum: 128 }
+        temperature: { type: [number, "null"], minimum: 0, maximum: 2 }
+        timeout: { type: number, minimum: 1 }
+        max_retries: { type: integer, minimum: 0, maximum: 5 }
+        output_token_parameter: { $ref: "#/components/schemas/OpenAIOutputTokenParameter" }
+        api_key_configured: { type: boolean }
+    AnthropicMessagesModelSettings:
+      type: object
+      additionalProperties: false
+      required: [api_format, model, max_output_tokens, temperature, timeout, max_retries, api_key_configured]
+      properties:
+        api_format: { type: string, const: anthropic_messages }
+        model: { type: string }
+        max_output_tokens: { type: [integer, "null"], minimum: 128 }
+        temperature: { type: [number, "null"], minimum: 0, maximum: 1 }
+        timeout: { type: number, minimum: 1 }
+        max_retries: { type: integer, minimum: 0, maximum: 5 }
+        api_key_configured: { type: boolean }
+    GoogleGenAIModelSettings:
+      type: object
+      additionalProperties: false
+      required: [api_format, model, max_output_tokens, temperature, timeout, max_retries, api_key_configured]
+      properties:
+        api_format: { type: string, const: google_genai }
+        model: { type: string }
+        max_output_tokens: { type: [integer, "null"], minimum: 128 }
+        temperature: { type: [number, "null"], minimum: 0 }
+        timeout: { type: number, minimum: 1 }
+        max_retries: { type: integer, minimum: 0, maximum: 5 }
+        api_key_configured: { type: boolean }
+    ProviderModelSettings:
+      oneOf:
+        - $ref: "#/components/schemas/OpenAICompatibleModelSettings"
+        - $ref: "#/components/schemas/AnthropicMessagesModelSettings"
+        - $ref: "#/components/schemas/GoogleGenAIModelSettings"
+      discriminator:
+        propertyName: api_format
+        mapping:
+          openai_compatible: "#/components/schemas/OpenAICompatibleModelSettings"
+          anthropic_messages: "#/components/schemas/AnthropicMessagesModelSettings"
+          google_genai: "#/components/schemas/GoogleGenAIModelSettings"
+    ModelWriteRequest:
+      type: object
+      additionalProperties: false
+      required: [label, provider, capabilities]
+      properties:
+        label: { type: string, minLength: 1, pattern: ".*\\S.*" }
+        provider: { $ref: "#/components/schemas/ProviderWriteSettings" }
+        capabilities: { $ref: "#/components/schemas/ModelCapabilities" }
+    Model:
+      type: object
+      additionalProperties: false
+      required: [model_id, label, provider, capabilities, configured]
+      properties:
+        model_id: { type: string }
+        label: { type: string, minLength: 1, pattern: ".*\\S.*" }
+        provider: { $ref: "#/components/schemas/ProviderModelSettings" }
+        capabilities: { $ref: "#/components/schemas/ModelCapabilities" }
+        configured: { type: boolean }
+    ModelMetadata:
+      type: object
+      additionalProperties: true
+      description: Provider-native model metadata represented as JSON.
+    ModelsResponse:
+      type: object
+      additionalProperties: false
+      required: [models, active_model_id]
+      properties:
+        models:
+          type: array
+          items: { $ref: "#/components/schemas/Model" }
+        active_model_id: { type: [string, "null"] }
+    ReviewOptions:
+      type: object
+      additionalProperties: false
+      required: [review_decisions, supported_effects_by_kind_and_action]
+      properties:
+        review_decisions:
+          type: array
+          items: { $ref: "#/components/schemas/ReviewDecision" }
+        supported_effects_by_kind_and_action:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: array
+              items: { $ref: "#/components/schemas/LayerEffect" }
+    ClassificationOption:
+      type: object
+      additionalProperties: false
+      required: [entity_type, display_name, description]
+      properties:
+        entity_type: { type: string }
+        display_name: { type: string }
+        description: { type: [string, "null"] }
+    ClassificationOptionsResponse:
+      type: object
+      additionalProperties: false
+      required: [options]
+      properties:
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/ClassificationOption" }
+    ModelInteractionStatus:
+      type: string
+      enum: [started, succeeded, failed, cancelled]
+    TokenCountMethod:
+      type: string
+      enum: [provider, estimated]
+    ParseStatus:
+      type: string
+      enum: [pending, succeeded, failed, not_applicable]
+    ModelRequestSummary:
+      type: object
+      additionalProperties: false
+      required: [source_payload_bytes, line_count, character_count, attachment_kind, attachment_mime_type, attachment_size_bytes, attachment_sha256, system_prompt_sha256]
+      properties:
+        source_payload_bytes: { type: integer, minimum: 0 }
+        line_count: { type: [integer, "null"], minimum: 0 }
+        character_count: { type: [integer, "null"], minimum: 0 }
+        attachment_kind:
+          oneOf:
+            - $ref: "#/components/schemas/SourceKind"
+            - type: "null"
+        attachment_mime_type: { type: [string, "null"] }
+        attachment_size_bytes: { type: [integer, "null"], minimum: 0 }
+        attachment_sha256:
+          type: [string, "null"]
+          pattern: "^[0-9a-f]{64}$"
+        system_prompt_sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+    ModelResultSummary:
+      type: object
+      additionalProperties: false
+      required: [response_size_bytes, parse_status, parsed_finding_count, rejected_finding_count, provider_code, provider_status, provider_request_id, provider_retryable]
+      properties:
+        response_size_bytes: { type: [integer, "null"], minimum: 0 }
+        parse_status: { $ref: "#/components/schemas/ParseStatus" }
+        parsed_finding_count: { type: [integer, "null"], minimum: 0 }
+        rejected_finding_count: { type: [integer, "null"], minimum: 0 }
+        provider_code: { type: [string, "null"] }
+        provider_status: { type: [integer, "null"] }
+        provider_request_id: { type: [string, "null"] }
+        provider_retryable: { type: [boolean, "null"] }
+    DebugModelIO:
+      type: object
+      description: Development-only textual provider diagnostics. Binary attachments are omitted.
+      additionalProperties: false
+      required: [request_payload, response_content, error_message]
+      properties:
+        request_payload:
+          type: object
+          additionalProperties: true
+        response_content: { type: string }
+        error_message: { type: [string, "null"] }
+    ModelInteractionLog:
+      type: object
+      description: Content-minimized model-call metadata with optional development diagnostics.
+      additionalProperties: false
+      required: [log_id, session_id, created_at, status, completed_at, duration_ms, kind, page, api_format, model, request_summary, result_summary, debug, finish_reason, input_count_method, estimated_input_tokens, provider_counted_input_tokens, requested_output_tokens, max_input_tokens, actual_input_tokens, actual_output_tokens, total_tokens, reasoning_tokens]
+      properties:
+        log_id: { type: string }
+        session_id: { type: string }
+        created_at: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/ModelInteractionStatus" }
+        completed_at: { type: [string, "null"], format: date-time }
+        duration_ms: { type: [integer, "null"], minimum: 0 }
+        kind: { $ref: "#/components/schemas/SourceKind" }
+        page: { type: [integer, "null"], minimum: 1 }
+        api_format: { $ref: "#/components/schemas/ApiFormat" }
+        model: { type: string }
+        request_summary: { $ref: "#/components/schemas/ModelRequestSummary" }
+        result_summary: { $ref: "#/components/schemas/ModelResultSummary" }
+        debug:
+          oneOf:
+            - $ref: "#/components/schemas/DebugModelIO"
+            - type: "null"
+        finish_reason: { type: [string, "null"] }
+        input_count_method:
+          oneOf:
+            - $ref: "#/components/schemas/TokenCountMethod"
+            - type: "null"
+        estimated_input_tokens: { type: [integer, "null"], minimum: 0 }
+        provider_counted_input_tokens: { type: [integer, "null"], minimum: 0 }
+        requested_output_tokens: { type: [integer, "null"], minimum: 0 }
+        max_input_tokens: { type: [integer, "null"], minimum: 0 }
+        actual_input_tokens: { type: [integer, "null"], minimum: 0 }
+        actual_output_tokens: { type: [integer, "null"], minimum: 0 }
+        total_tokens: { type: [integer, "null"], minimum: 0 }
+        reasoning_tokens: { type: [integer, "null"], minimum: 0 }
+    ModelLogsResponse:
+      type: object
+      additionalProperties: false
+      required: [session_id, logs]
+      properties:
+        session_id: { type: string }
+        logs:
+          type: array
+          items: { $ref: "#/components/schemas/ModelInteractionLog" }
+    ActorType:
+      type: string
+      enum: [system, reviewer]
+    AuditEvent:
+      type: object
+      additionalProperties: false
+      required: [event_id, session_id, actor_id, actor_type, event_type, payload, previous_hash, event_hash, created_at]
+      properties:
+        event_id: { type: string }
+        session_id: { type: string }
+        actor_id: { type: string }
+        actor_type: { $ref: "#/components/schemas/ActorType" }
+        event_type: { type: string }
+        payload:
+          type: object
+          additionalProperties: true
+        previous_hash: { type: [string, "null"] }
+        event_hash: { type: string }
+        created_at: { type: string, format: date-time }
+    AuditEventsResponse:
+      type: object
+      additionalProperties: false
+      required: [session_id, event_count, last_event_hash, events]
+      properties:
+        session_id: { type: string }
+        event_count: { type: integer, minimum: 0 }
+        last_event_hash: { type: [string, "null"] }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/AuditEvent" }
